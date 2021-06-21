@@ -1,0 +1,14 @@
+{
+    "restartable": "rs",
+    "verbose": true,
+    "ignore": [
+        "node_modules"
+    ],
+    "watch": [
+        "server"
+    ],
+    "ext": "js",
+    "execMap": {
+        "js": "node server/app.js"
+    }
+}

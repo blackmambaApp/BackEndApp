@@ -6,11 +6,11 @@ const cheerio = require("cheerio");
 const axios = require('axios');
 
 async function scrapePlayers() {
-    const pageClasification = await axios.get('https://www.acb.com/');
+    const pageClasification = await axios.get('https://www.acb.com/club/index/temporada_id/2020/edicion_id/960');
     const players = [];
     const dataTeam = [];
     const $ = cheerio.load(pageClasification.data);
-    $('.contenedor_logos_equipos').find("a").map((_,element) => {
+    $('.foto').find("a").map((_,element) => {
         const enlace = $(element).attr('href');
         const equipo = $(element).find("img").attr('alt');
         const img  = $(element).find("img").attr('src');
@@ -52,7 +52,8 @@ jugadorController.createAllPlayers = async(req, res) => {
                 status: 'Libre',
                 realTeam: player.equipo,
                 realTeamImg: player.img_equipo,
-                playerImg: player.img_jugador
+                playerImg: player.img_jugador,
+                points: 0
             })
             newPlayer.save();
         })

@@ -5,11 +5,20 @@ const {Schema} = mongoose;
 
 const equipo_schema = new Schema ({
     name: {type:String, required: true, unique:true},
+    image: {type:String, required: false},
     budget: {type:Number, required:true}, 
     numPlayers: {type:Number, required:true},
+    points: {type:Number, default: 0},
     players: [{
-        type: Schema.ObjectId,
-        ref: "Jugador"
+        _id : {type: String},
+        name: {type:String, required: true},
+        position: { type:String, enum:['A','AP','B','P','E'] },
+        transferValue: {type:Number},
+        status: { type:String, enum: ['Transferible','Libre','ConEquipo'] },
+        realTeam: {type:String, required:true},
+        realTeamImg: {type:String},
+        playerImg: {type:String},
+        points: {type: Number, default: 0}
     }],
     user: { 
         type: Schema.ObjectId,
@@ -19,10 +28,7 @@ const equipo_schema = new Schema ({
         type: Schema.ObjectId,
         ref: "Comunidad"
     },
-    alignedPlayers: [{
-        type: Schema.ObjectId,
-        ref: "Jugador"
-    }]
+    alignedPlayers: [{}]
 });
 
 module.exports = mongoose.model('Equipo', equipo_schema);

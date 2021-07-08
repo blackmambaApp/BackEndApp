@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const {Schema} = mongoose;
-/* const User = require('../userModel/users')*/
 var Users = mongoose.model('Users');
 
 const comunidad_schema = new Schema({
@@ -22,8 +21,15 @@ const comunidad_schema = new Schema({
         ref: 'Users'
     }],
     players: [{
-        type: Schema.ObjectId,
-        ref: 'Jugador'
+        _id : {type: String},
+        name: {type:String, required: true},
+        position: { type:String, enum:['A','AP','B','P','E'] },
+        transferValue: {type:Number},
+        status: { type:String, enum: ['Transferible','Libre','conEquipo'] },
+        realTeam: {type:String, required:true},
+        realTeamImg: {type:String},
+        playerImg: {type:String},
+        points: {type: Number, default: 0}
     }]
 });
 

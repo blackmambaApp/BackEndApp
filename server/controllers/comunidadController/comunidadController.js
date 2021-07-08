@@ -5,6 +5,13 @@ const comunidadController = {};
 
 
 
+comunidadController.getOneComunidad = async (req, res) => {
+    const {idComunidad} = req.params;
+    await Comunidad.findById(idComunidad).then(response => {
+        res.send(response)
+    });
+}
+
 comunidadController.getComunidades = async (req, res) => {  
     await Comunidad.find().populate({path:"users"}).populate({path:"players"}).then(comunidades => {
         res.send(comunidades);
@@ -54,19 +61,22 @@ comunidadController.updateComunidad = async(req,res) => {
     const {idComunidad,idUser}  = req.params;
     //Comparar los usuarios de la comunidad en base de datos con los de la comunidad si se va a actualizar
     const comunidadBD = await Comunidad.findOne({users:idUser});
+    const usersActuales = req.body.users;
     const userBD = await User.findById(idUser);
-    const newComunidad = {
-        _id: idComunidad,
-        name: req.body.name,
-        password: req.body.password,
-        numIntegrants: req.body.numIntegrants,
-        budget: req.body.budget,
-        type: req.body.type,
-        users: req.body.users
-    }
+   
     if(comunidadBD != null){
         res.status(409).send("Ya estas registrado en una comunidad");
     }else{
+        usersActuales.push(userBD)
+        const newComunidad = {
+            _id: idComunidad,
+            name: req.body.name,
+            password: req.body.password,
+            numIntegrants: req.body.numIntegrants,
+            budget: req.body.budget,
+            type: req.body.type,
+            users: usersActuales
+        }
         await Comunidad.findByIdAndUpdate(idComunidad, {$set: newComunidad}, (err,result) => {
             if(err) {
                 console.log(err)

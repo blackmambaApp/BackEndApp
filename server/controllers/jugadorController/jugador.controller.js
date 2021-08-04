@@ -9,7 +9,6 @@ const JornadaEquipo = require('../../models/jornadaJugadorPuntos/jornadaEquipo')
 const jugadorController = {};
 const cheerio = require("cheerio");
 const axios = require('axios');
-var Excel = require('Excel4node');
 var moment = require('moment');
 
 async function scrapePlayers() {
@@ -48,44 +47,6 @@ async function scrapePlayers() {
     }
     return players;
 }
-
-async function generateExcelPuntosPorJornada(players,jornada) { 
-
-    var workbook = new Excel.Workbook();
-
-    var worksheet = workbook.addWorksheet('Sheet 1')
-    var worksheet2 = workbook.addWorksheet('Sheet 2')
-    
-    // Create a reusable style
-    var style = workbook.createStyle({
-        font: {
-          color: '#000000',
-          size: 12
-        },
-        numberFormat: '#; (#); 0'
-    });
-
-    // Set value of cell A1 to 100 as a number type styled with paramaters of style
-    worksheet.cell(1,1).string("Jornada").style(style);
-    worksheet.cell(1,2).string("Jugador").style(style);
-    worksheet.cell(1,3).string("Puntos").style(style);
-    worksheet.cell(1,4).string("Fecha").style(style);
-    var fecha = moment().format('DD/MM/YYYY');
-    var lineaIncial = 2
-    // Jornada Jugador Puntos Fecha 
-    players.forEach((player,idx) => {
-        var linea = idx + lineaIncial;
-        var puntos = Math.round(Math.random()  * (10 - 0) + 0);
-        worksheet.cell(linea,1).number(jornada).style(style);
-        worksheet.cell(linea,2).string(player.name).style(style);
-        worksheet.cell(linea,3).number(puntos).style(style);
-        worksheet.cell(linea,4).string(fecha).style(style);
-    })
-    
-    workbook.write('ExcelJugadores_Jornada'.concat(jornada).concat('.xlsx'));
-}
-
-
 
 jugadorController.createAllPlayers = async(req, res) => {
     scrapePlayers().then((result) => {

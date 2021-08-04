@@ -6,13 +6,17 @@ const passport = require('passport');
 const flash = require('connect-flash');
 const mongoose = require('mongoose');
 
+//IMPORT VARIBLES DE ENTORNO
+require('dotenv').config({path : 'desarrollo.env'});
+console.log(process.env.DB_URL);
+
 
 var session = require('express-session'),
     bodyParser = require('body-parser');
 
 // DATABASE SETTINGS.
 mongoose.set('useFindAndModify', false);
-const uri = "mongodb+srv://admin:Q1R2s3u4@cluster0.vfjbi.mongodb.net/blackMambaDBPre?retryWrites=true&w=majority";
+const uri = process.env.DB_URL;
 mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true});
 const connection = mongoose.connection;
 
@@ -56,11 +60,14 @@ app.use('/api/jugadores',require('./routes/accionesRoutes/jugador.routes'));
 app.use('/api/equipo',require('./routes/teamRoutes/team.routes'));
 
 app.get('/', (req,res) => {
-    res.send('Hello World')
+    res.send('La aplicacion de Backend se ha arrancado correctamente');
 })
 
 //Starting the Server
+
+
 const port = app.get('port');
-app.listen(port, () => {
-    console.log(`Server Working at http://localhost:${port}`)
+const host = process.env.HOST || '0.0.0.0';
+app.listen(port,host, () => {
+    console.log(`Server Working at http://${host}:${port}`)
 })

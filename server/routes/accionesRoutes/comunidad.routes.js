@@ -4,8 +4,9 @@ const comunidadController = require('../../controllers/comunidadController/comun
 
 
 router.get('/', comunidadController.getComunidades);
-router.get('/:idComunidad', comunidadController.getOneComunidad);
+router.get('/:idUser', comunidadController.getOneComunidad);
 router.post('/:idUser', comunidadController.createComunidad);
-router.put('/:idComunidad/:idUser', comunidadController.updateComunidad);
+router.put('/:idComunidad/:idUser', comunidadController.addUserAndUpdateComunidad);
+router.put('/update', comunidadController.updateComunidad);
 
 module.exports = router;

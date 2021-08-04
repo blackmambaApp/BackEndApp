@@ -9,17 +9,8 @@ const equipo_schema = new Schema ({
     budget: {type:Number, required:true}, 
     numPlayers: {type:Number, required:true},
     points: {type:Number, default: 0},
-    players: [{
-        _id : {type: String},
-        name: {type:String, required: true},
-        position: { type:String, enum:['A','AP','B','P','E'] },
-        transferValue: {type:Number},
-        status: { type:String, enum: ['Transferible','Libre','ConEquipo'] },
-        realTeam: {type:String, required:true},
-        realTeamImg: {type:String},
-        playerImg: {type:String},
-        points: {type: Number, default: 0}
-    }],
+    dateOfCreation: {type: Date, default: Date.now },
+    players: [{}],
     user: { 
         type: Schema.ObjectId,
         ref: "Users"

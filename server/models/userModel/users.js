@@ -18,7 +18,7 @@ const user_schema = new Schema({
     password: {type:String, required:true},
     comunidad: {
         type: Schema.ObjectId,
-        ref: 'comunidad'
+        ref: 'Comunidad'
     },
     equipo: {
         type: Schema.ObjectId,

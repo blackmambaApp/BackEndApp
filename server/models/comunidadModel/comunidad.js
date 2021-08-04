@@ -7,6 +7,9 @@ const comunidad_schema = new Schema({
     password: {type:String, required:false},
     numIntegrants: {type:Number, required:true},
     budget: {type: Number, required:true},
+    jugadoresMaximosMercado: {type: Number, required: true},
+    maxDaysPlayerOnMarket: {type: Number, required: true},
+    playersForUserInMarket: {type: Number, required: true},
     type: {
         type:String,
         enum: ['Public', 'Private'],
@@ -20,17 +23,11 @@ const comunidad_schema = new Schema({
         type: Schema.ObjectId,
         ref: 'Users'
     }],
-    players: [{
-        _id : {type: String},
-        name: {type:String, required: true},
-        position: { type:String, enum:['A','AP','B','P','E'] },
-        transferValue: {type:Number},
-        status: { type:String, enum: ['Transferible','Libre','conEquipo'] },
-        realTeam: {type:String, required:true},
-        realTeamImg: {type:String},
-        playerImg: {type:String},
-        points: {type: Number, default: 0}
-    }]
+    teams: [{
+        type: Schema.ObjectId,
+        ref: 'Equipo'
+    }],
+    players: [{}],
 });
 
-module.exports = mongoose.model('comunidad', comunidad_schema);
+module.exports = mongoose.model('Comunidad', comunidad_schema);

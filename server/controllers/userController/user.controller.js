@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt-nodejs');
 const { ExtractJwt } = require('passport-jwt');
 const userController= {};
 const jwt = require('jsonwebtoken');
+const GenerateExcel = require('../../utiles/excel_puntos_jornada');
 
 userController.getUsers = async (req, res) => {
     const users = await User.find();
@@ -19,13 +20,10 @@ userController.createUsers = async(req, res) => {
         email: req.body.email,
         password: bcrypt.hashSync(req.body.password)
     });
-    var user = new User();
-    await User.findOne({email:req.body.email},(err,result) =>{
-        user = result;
-    }).catch((err) => {
-    });
-    if(user){
-        res.status(409).send("Este email ya está registrado");
+    var userByNickname = await User.findOne({nickName:req.body.nickName});
+    var userByEmail = await User.findOne({email:req.body.email});
+    if(userByNickname || userByEmail){
+        res.status(400).send("El nombre de usuario o el email ya están registrados, por favor pruebe a introducir otros.");
     }else{
     await newUser.save();
     const expiresIn = 24*60*60;
@@ -79,13 +77,12 @@ userController.signUserAfterComunityCreate = async(req,res) => {
 
 userController.singnWithUser = async(req, res) => {
     const {nickName,password} = req.body;
-    
     const user = await User.findOne({nickName});
-    const query = {users: user.id}
-    const comunidad = await Comunidad.findOne(query);
     if(!user){
         return res.status(401).send('El usuario no existe');
     }else{
+        const query = {users: user.id}
+        const comunidad = await Comunidad.findOne(query);
         const resultPassword = bcrypt.compareSync(password, user.password);
         if(resultPassword){
             const expiresIn=30*60;

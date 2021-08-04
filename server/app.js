@@ -67,8 +67,7 @@ app.get('/', (req,res) => {
 //Starting the Server
 
 
-const port = app.get("port");
-const host = app.get("host");
-app.listen(port,host, () => {
-    console.log(`Server Working`, port, host);
+app.listen(process.env.PORT || 8080, () => {
+    console.log(`Server Working`, port);
+
 })

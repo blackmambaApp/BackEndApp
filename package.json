@@ -5,6 +5,7 @@
     "main": "index.js",
     "scripts": {
         "start": "node server/app.js",
+        "worker": "node server/app.js",
         "watch": "nodemon",
         "lint": "standard 'src/**/*.js"
     },

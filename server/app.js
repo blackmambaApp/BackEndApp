@@ -26,6 +26,7 @@ connection.once('open', () => {
 
 //Settings 
 app.set('port',  process.env.PORT || 3000); //Elige un puerto automatico o me asigna el puerto 3000 si esta disponible
+app.set('host',  process.env.HOST || '0.0.0.0'); //Elige un puerto automatico o me asigna el puerto 3000 si esta disponible
 
 
 //Middlewares 
@@ -66,8 +67,8 @@ app.get('/', (req,res) => {
 //Starting the Server
 
 
-const port = process.env.PORT || 3000;
-const host = process.env.HOST || '0.0.0.0';
+const port = app.get("port");
+const host = app.get("host");
 app.listen(port,host, () => {
-    console.log(`Server Working`)
+    console.log(`Server Working`, port, host);
 })

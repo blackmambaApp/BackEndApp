@@ -27,6 +27,15 @@ comunidadController.createComunidad = async(req, res) => {
         type = 'Private'
     }
     const players  = await Jugador.find({});
+    teamAdmin = {
+        _id: '00000000000000000000000admin',
+        name: 'System Team',
+        image: '/static/media/logo.ab694774.png',
+    }
+    players.forEach((player, index) => {
+        player.team = teamAdmin;
+        players.splice(index,1,player);
+    })
     let user =  await User.findById(req.params.idUser);
     let users = [];
     users.push(user);

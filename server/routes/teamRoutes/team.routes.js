@@ -17,6 +17,7 @@ const upload = multer({storage : storage});
 router.get('/getEquipo/:idComunidad', teamController.getEquipoByComunidad);
 router.put('/edit', teamController.updateTeam);
 router.get('/:idUser', teamController.getTeamByUserId);
+router.get('/jornadasEquipo/:idTeam', teamController.getJourneysForTeam);
 router.post('/create/:idComunidad/:idUser',upload.single("image"),teamController.createTeamInComunity);
 router.put('/insertTeamInComunity/:idComunidad/:idTeam', teamController.actualizaComunidadConEquipo);
 router.post('/changeAlignement/:idTeam', teamController.changeAlignmentForTheTeam);

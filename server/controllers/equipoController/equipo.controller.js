@@ -1,25 +1,9 @@
-const { MongoClient, GridFSBucket, ObjectID } = require('mongodb');
 const User = require('../../models/userModel/users');
 const Comunidad = require('../../models/comunidadModel/comunidad');
 const Equipo = require('../../models/equipoModel/equipo');
-const Jugador = require('../../models/equipoModel/jugador');
-const GenerateExcel = require('../../utiles/excel_puntos_jornada');
+const Notice = require('../../models/noticeModel/notice');
+const JornadaEquipo = require('../../models/jornadaJugadorPuntos/jornadaEquipo');
 const teamController = {};
-const multer = require("multer");
-const mongodb = require('mongodb');
-const mongoose = require('mongoose');
-/**
- * NodeJS Module dependencies.
- */
-const { Readable } = require('stream');
-
-/**
- * Connect Mongo Driver to MongoDB.
- */
-const url ="mongodb+srv://admin:Q1R2s3u4@cluster0.vfjbi.mongodb.net/blackMambaDBPre?retryWrites=true&w=majority";
-const dbName = 'blackMambaDBPre';
-const opts = { useUnifiedTopology: true };
-
 
 teamController.getEquipoByComunidad = async (req, res) => {
     const {idComunidad} = req.params; 
@@ -29,92 +13,97 @@ teamController.getEquipoByComunidad = async (req, res) => {
 
 teamController.createTeamInComunity = async(req, res) => {
     const {idComunidad,idUser} = req.params;
-    var comunidad = await Comunidad.findById(idComunidad).populate({path:"teams"});
-    var equipos = await Equipo.find().where("comunidad", comunidad.toObject());
     
-    let playerAsigned = [];
-    equipos.forEach((equipo) => {
-        equipo.players.forEach((player) => {
-            playerAsigned.push(player);
+    var equipoBD = await Equipo.findOne({name: req.body.name});
+
+    if(equipoBD !== null){
+        res.status(204).send('UPS.Lo sentimos este nombre ya ha sido seleccionado');
+    }else{    
+        var comunidad = await Comunidad.findById(idComunidad).populate({path:"teams"});
+        var equipos = await Equipo.find().where("comunidad", comunidad.toObject());
+        
+        let playerAsigned = [];
+        equipos.forEach((equipo) => {
+            equipo.players.forEach((player) => {
+                playerAsigned.push(player);
+            })
         })
-    })
-   // let playersAbleToAsign = comunidad.players.concat(playerAsigned);
-    var names = new Set(playerAsigned.map(player => player.name))
-    let playersAbleToAsign = comunidad.players.filter(player => !names.has(player.name));
+        // let playersAbleToAsign = comunidad.players.concat(playerAsigned);
+        var names = new Set(playerAsigned.map(player => player.name))
+        let playersAbleToAsign = comunidad.players.filter(player => !names.has(player.name));
 
-    const user = await User.findById(idUser);
-    const players = []; //jugadores a los que aun hay que cambiarles el estado
-    const finalPlayers = [];
-    const playersFreeA = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="A")
-    const shuffledFreeA = playersFreeA.sort(() => 0.5 - Math.random());
-    players.push(shuffledFreeA.slice(0,1));
-    players.push(shuffledFreeA.slice(1,2));
-    //Players free who plays Base
-    const playersFreeB = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="B")
-    const shuffledFreeB =  playersFreeB.sort(() => 0.5 - Math.random());
-    players.push(shuffledFreeB.slice(0,1));
-    players.push(shuffledFreeB.slice(1,2));
-    //Players free who plays Ala Pivot
-    const playersFreeAP = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="AP")
-    const shuffledFreeAP = playersFreeAP.sort(() => 0.5 - Math.random());
-    players.push(shuffledFreeAP.slice(0,1));
-    players.push(shuffledFreeAP.slice(1,2));
-    //Players free who plays Escolta
-    const playersFreeE = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="E")
-    const shuffledFreeE = playersFreeE.sort(() => 0.5 - Math.random());
-    players.push(shuffledFreeE.slice(0,1));
-    players.push(shuffledFreeE.slice(1,2));
-    //Players free who plays Pivot
-    const playersFreeP = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="P")
-    const shuffledFreeP = playersFreeP.sort(() => 0.5 - Math.random());
-    players.push(shuffledFreeP.slice(0,1));
-    players.push(shuffledFreeP.slice(1,2));
-    players.forEach(player => {
-        finalPlayers.push(player[0]);
-    })
-    finalPlayers.forEach((player,index) => {
-        player.status = 'ConEquipo';
-        player.team = req.body.name;
-        finalPlayers.splice(index,1,player);
-    })
-    let numPlayers = players.length;
+        const user = await User.findById(idUser);
+        const players = []; //jugadores a los que aun hay que cambiarles el estado
+        const finalPlayers = [];
+        const playersFreeA = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="A")
+        const shuffledFreeA = playersFreeA.sort(() => 0.5 - Math.random());
+        players.push(shuffledFreeA.slice(0,1));
+        players.push(shuffledFreeA.slice(1,2));
+        //Players free who plays Base
+        const playersFreeB = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="B")
+        const shuffledFreeB =  playersFreeB.sort(() => 0.5 - Math.random());
+        players.push(shuffledFreeB.slice(0,1));
+        players.push(shuffledFreeB.slice(1,2));
+        //Players free who plays Ala Pivot
+        const playersFreeAP = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="AP")
+        const shuffledFreeAP = playersFreeAP.sort(() => 0.5 - Math.random());
+        players.push(shuffledFreeAP.slice(0,1));
+        players.push(shuffledFreeAP.slice(1,2));
+        //Players free who plays Escolta
+        const playersFreeE = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="E")
+        const shuffledFreeE = playersFreeE.sort(() => 0.5 - Math.random());
+        players.push(shuffledFreeE.slice(0,1));
+        players.push(shuffledFreeE.slice(1,2));
+        //Players free who plays Pivot
+        const playersFreeP = playersAbleToAsign.filter(player => player.status === "Libre" && player.position ==="P")
+        const shuffledFreeP = playersFreeP.sort(() => 0.5 - Math.random());
+        players.push(shuffledFreeP.slice(0,1));
+        players.push(shuffledFreeP.slice(1,2));
+        players.forEach(player => {
+            finalPlayers.push(player[0]);
+        })
+        finalPlayers.forEach((player,index) => {
+            player.status = 'ConEquipo';
+            player.team = {name: req.body.name,image: req.body.image};
+            finalPlayers.splice(index,1,player);
+        })
+        let numPlayers = players.length;
 
-    const newTeam = new Equipo({
-        name: req.body.name,
-        image: req.body.image,
-        budget: comunidad.budget, 
-        numPlayers: numPlayers,
-        players: finalPlayers,
-        comunidad: comunidad,
-        user: user
-    });
-    await newTeam.save((err,doc) => {
-       if(err) {
-           console.log("Error al crear el equipo");
-           res.status(409).send("Error al crear el equipo");
-       }else { 
-           res.status(200).send(doc);
-       }
-    });
+        const newTeam = new Equipo({
+            name: req.body.name,
+            image: req.body.image,
+            budget: comunidad.budget, 
+            numPlayers: numPlayers,
+            players: finalPlayers,
+            comunidad: comunidad,
+            user: user
+        });
+        await newTeam.save((err,doc) => {
+           if(err) {
+               console.log("Error al crear el equipo");
+               res.status(409).send("Error al crear el equipo");
+           }else { 
+               let content = 'El usuario '.concat(user.firstName).concat(' dueño del equipo ').concat(doc.name).concat(' ,se ha unido a la comunidad.');
+               const newNotice = new Notice({
+                    comunity: idComunidad,
+                    content: content,  
+                    status: 'NotShowed',
+                    type: 'TeamIn',
+                    users: [],
+                })
+                newNotice.save();
+                res.status(200).send(doc);
+           }
+        });
     }
+}
 
-teamController.getTeamImage = async(req, res) => {
-    const{idImagen} = req.params; 
-    try {
-        var imageID = new ObjectID(idImagen);
-    } catch(err) {
-        return res.status(400).json({ message: "Invalid trackID in URL parameter. Must be a single String of 12 bytes or a string of 24 hex characters" }); 
-    }
+teamController.getJourneysForTeam = async(req, res) => {
+    const{idTeam} = req.params; 
     
-    res.set('content-type', 'image/png');
-    res.set('accept-ranges', 'bytes');
-    const client = await MongoClient.connect(url, opts);
-    const db = client.db(dbName);
-    const bucket = new GridFSBucket(db, {
-        bucketName: 'images'
-    });
+    var journeyTeam = await JornadaEquipo.find({team:idTeam}).populate({path:"journey"});
 
-    let downloadStream = bucket.openDownloadStream(imageID);
+    res.status(200).send(journeyTeam);
     
 }
 
@@ -124,10 +113,15 @@ teamController.actualizaComunidadConEquipo = async(req, res) => {
     
     var comunidad = await Comunidad.findById(idComunidad).populate({path:"teams"});
     var equipo = await Equipo.findById(idTeam);
+    const equipoCopy = {
+        _id: equipo._id,
+        name: equipo.name,
+        image: equipo.image
+    };
     equipo.players.forEach((player) => {
-        var indice = comunidad.players.indexOf(p => p._id.toString() === player._id.toString());
+        var indice = comunidad.players.findIndex(p => p._id.toString() === player._id.toString());
         player.status = 'ConEquipo';
-        player.team = req.body.name;
+        player.team = equipoCopy;
         comunidad.players.splice(indice, 1,player);  
     })
     comunidad.teams.push(equipo);

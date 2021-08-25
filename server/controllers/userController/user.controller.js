@@ -1,5 +1,8 @@
 const User = require('../../models/userModel/users');
 const Comunidad = require('../../models/comunidadModel/comunidad');
+const Equipo = require('../../models/equipoModel/equipo');
+const Offer = require('../../models/offerModel/offer');
+const Notice = require('../../models/noticeModel/notice');
 const bcrypt = require('bcrypt-nodejs');
 const { ExtractJwt } = require('passport-jwt');
 const userController= {};
@@ -141,18 +144,101 @@ userController.deleteUser = async(req,res) => {
 
 userController.updateUser = async(req,res) => {
     const{id} = req.params;
-    const newUser = {
-        rol: req.body.rol,
-        firstName: req.body.firstName, 
-        lastName: req.body.lastName, 
-        nickName: req.body.nickName, 
-        email: req.body.email,
-        password: req.body.password
+    const user = await User.findById(id); 
+    const resultPassword = bcrypt.compareSync(req.body.password, user.password);
+
+    if(resultPassword) {
+        let password = user.password;
+        if(!(req.body.newPassword === undefined || req.body.newPassword === null)){
+            password = bcrypt.hashSync(req.body.newPassword)
+        }
+        const newUser = {
+            id:req.body._id,
+            rol: req.body.rol,
+            email:req.body.email,
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            nickName: req.body.nickName,
+            password: password,
+            comunidad: req.body.comunidad
+        }
+        await User.findByIdAndUpdate(id, {$set:newUser}, {new:true}, (err,result) => {
+            if(err){
+                res.status(203).send('Error actualizando usuario');
+            }else{
+                res.status(200).send(result);
+            }
+        });
+    }else{
+        res.status(204).send('Contraseña incorrecta');
     }
-    await User.findByIdAndUpdate(id, {$set:newUser}, {new:true});
-    res.json({
-        status: 'Usuario actualizado'
-    });
+}
+
+userController.leaveUserFromComunity = async(req, res) => { 
+    const {userId, comunityId} = req.params; 
+    const password = req.body.password;
+    const user = await User.findById(userId); 
+    const resultPassword = bcrypt.compareSync(password, user.password);
+    if(resultPassword) {
+        const equipo = await Equipo.findOne({user: user}); 
+
+        const comunidad = await Comunidad.findById(comunityId).populate({path:'user'})
+                                                              .populate({path:'teams'})
+                                                              .populate({path:'owner'}); 
+
+        comunidad.users.forEach((u,index) =>{
+            if(u._id.toString() === user._id.toString()) {
+                comunidad.users.splice(index, 1);
+            }
+        })
+
+        comunidad.teams.forEach((eq, index) =>{
+            if(eq._id.toString() === equipo._id.toString()) {
+                comunidad.teams.splice(index, 1); 
+            }
+        })
+
+        //Falseo del TEAM ADMIN
+        teamAdmin = {
+            _id: '00000000000000000000000admin',
+            name: 'System Team',
+            image: '/static/media/logo.ab694774.png',
+        }
+
+        equipo.players.forEach((playerTeam, idx) => {
+            const player = comunidad.players.filter(p => p._id.toString() === playerTeam._id.toString())[0];
+            const indxPC = comunidad.players.findIndex(p => p._id.toString() === playerTeam._id.toString())
+            player.status = 'Libre';
+            player.team = teamAdmin;
+            comunidad.players.splice(indxPC, 1, player); 
+        })
+
+        user.comunidad = null;
+
+        if(comunidad.owner._id.toString() === user._id.toString()){
+            const user = comunidad.users[0];
+            comunidad.owner = user; 
+        }
+
+        Equipo.deleteOne(equipo).then((doc) => {
+            comunidad.save();
+            user.save();
+            let content = 'El usuario '.concat(user.firstName).concat(' dueño del equipo ').concat(equipo.name).concat(' ,ha abandonado la comunidad.');
+            const newNotice = new Notice({
+                comunity: comunityId,
+                content: content,  
+                status: 'NotShowed',
+                type: 'TeamOut',
+                users: [],
+            });
+            newNotice.save();
+            res.status(200).send('Comunidad abandonada correctamente.')
+        })
+    } else{
+        res.status(204).send('Contraseña incorrecta.')
+    }
+
+
 }
 
 module.exports = userController;

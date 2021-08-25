@@ -18,7 +18,8 @@ const jornada_equipo = new Schema({
         ref: "Comunidad",
         required:true},
     dateOfCreation: {type: Date, default: Date.now },
-    playersToPuntuate : [{}]
+    playersToPuntuate : [{}],
+    playersAligned: [{}]
 
 });
 

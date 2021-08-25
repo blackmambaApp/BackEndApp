@@ -17,7 +17,7 @@ const jugador_schema = new Schema ({
     realTeamImg: {type:String},
     playerImg: {type:String},
     points: {type: Number, default: 0},
-    team: {type: String, required: false},
+    team: {},
     puntuations: [[Number]]
 })
 

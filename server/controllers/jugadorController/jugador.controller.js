@@ -1,6 +1,7 @@
 const Jugador = require('../../models/equipoModel/jugador');
 const User = require('../../models/userModel/users');
 const PuntosJugador = require('../../models/jornadaJugadorPuntos/jornadaEquipo');
+const Offer = require('../../models/offerModel/offer');
 const Jornada = require('../../models/jornadaJugadorPuntos/jornada');
 const Comunidad = require('../../models/comunidadModel/comunidad');
 const Equipo = require('../../models/equipoModel/equipo');
@@ -12,11 +13,11 @@ const axios = require('axios');
 var moment = require('moment');
 
 async function scrapePlayers() {
-    const pageClasification = await axios.get('https://www.acb.com/club/index/temporada_id/2020/edicion_id/960');
+    const pageClasification = await axios.get('https://www.acb.com/club/index/temporada_id/2020/edicion_id/963');
     const players = [];
     const dataTeam = [];
     const $ = cheerio.load(pageClasification.data);
-    $('.foto').find("a").map((_,element) => {
+    $('.club').find(".foto").find("a").map((_,element) => {
         const enlace = $(element).attr('href');
         const equipo = $(element).find("img").attr('alt');
         const img  = $(element).find("img").attr('src');
@@ -59,7 +60,8 @@ jugadorController.createAllPlayers = async(req, res) => {
                 realTeam: player.equipo,
                 realTeamImg: player.img_equipo,
                 playerImg: player.img_jugador,
-                points: 0
+                points: 0,
+                puntuations: []
             })
             newPlayer.save();
         })
@@ -85,7 +87,7 @@ jugadorController.cargarPuntosJornada = async(req, res) => {
     let players = await Jugador.find({}); 
     const allPuntosJugador = [];
     players.forEach((player) => {
-        var puntos = Math.round(Math.random()  * (10 - 0) + 0);
+        var puntos = Math.round(Math.random()  * (10 - (-5)) + (-5));
         player.points = puntos;
         allPuntosJugador.push(player);
     })
@@ -120,32 +122,29 @@ jugadorController.actualizaJugadoresComunidad = async(req, res) => {
 
     const journeyDB = await Jornada.findOne({journeyNumber : journeyNumber});
 
-    if(journeyDB === null){
-        res.status(409).send("No esta generada la jornada");
-    }else {
-        await Comunidad.find({}).then((comunidades) => {
-            comunidades.forEach((comunidad) => {
-                comunidad.players.forEach((player,index) => {
-                    const playerWithPoints = filterAndReturnPlayer(journeyDB.playersPoints, player);
-                    const playerForPuntuations = journeyDB.playersPoints.filter(p => p.name === playerWithPoints.name);
-                    if(playerForPuntuations.puntuations === undefined) {
-                        const arrayOfPoints = [];
-                        arrayOfPoints.push(playerForPuntuations.points)
-                        playerWithPoints.puntuations = arrayOfPoints
-                    }else{
-                        playerWithPoints.puntuations.push(playerForPuntuations.points);
-                    }
-                    comunidad.players.splice(index, 1,playerWithPoints);    
-                })
-                comunidad.save();
+    await Comunidad.find({}).then((comunidades) => {
+        comunidades.forEach((comunidad) => {
+            comunidad.players.forEach((player,index) => {
+                //const playerWithPoints = filterAndReturnPlayer(journeyDB.playersPoints, player);
+                const playerForPuntuations = journeyDB.playersPoints.filter(p => p.name === player.name)[0];
+                player.points += playerForPuntuations.points
+                if(player.puntuations === undefined) {
+                    const arrayOfPoints = [];
+                    arrayOfPoints.push(playerForPuntuations.points)
+                    player.puntuations = arrayOfPoints
+                }else{
+                    player.puntuations.push(playerForPuntuations.points);
+                }
+                comunidad.players.splice(index, 1,player);    
             })
-            console.log("Los jugadores se han actualizado correctamente en todas las comunidades");
-            res.status(200).send("Los jugadores se han actualizado correctamente en todas las comunidades");
-        }).catch((e) => {
-            console.log("Los jugadores no se han actualizado correctamente en todas las comunidades");
-            res.status(409).send("Los jugadores no se han actualizado correctamente en todas las comunidades");
-        });
-    }
+            comunidad.save();
+        })
+        console.log("Los jugadores se han actualizado correctamente en todas las comunidades");
+        res.status(200).send("Los jugadores se han actualizado correctamente en todas las comunidades");
+    }).catch((e) => {
+        console.log("Los jugadores no se han actualizado correctamente en todas las comunidades");
+        res.status(409).send("Los jugadores no se han actualizado correctamente en todas las comunidades");
+    });
 }
 
 jugadorController.generarJornadasYPuntosPorEquipo = async (req,res) => {
@@ -163,16 +162,17 @@ jugadorController.generarJornadasYPuntosPorEquipo = async (req,res) => {
                 if(moment(equipo.dateOfCreation).isBefore(moment(journeyDB.date))){
                     var points = 0;
                     const playersPuntuated = filterPlayersToPuntuate(journeyDB.playersPoints, equipo.players);
+                    const playersAligned = filterPlayersToPuntuate(playersPuntuated, equipo.alignedPlayers);
+                    const playersNotAligned = filterPlayersNotDuplicated(playersPuntuated, equipo.alignedPlayers);
                     const teamJourney = new JornadaEquipo ({
                         journey : journeyDB, 
                         team: equipo,
                         comunity: comunidad,
                         fecha : date, 
-                        playersToPuntuate: playersPuntuated
+                        playersToPuntuate: playersPuntuated,
+                        playersAligned : playersAligned
                     })
                     teamJourney.save();  
-                    const playersAligned = filterPlayersToPuntuate(playersPuntuated, equipo.alignedPlayers);
-                    const playersNotAligned = filterPlayersNotDuplicated(playersPuntuated, equipo.alignedPlayers);
                     playersNotAligned.forEach((player, index)=> {
                         const playerTeam = equipo.players.filter(p => p.name === player.name);
                         playerTeam[0].points += player.points;
@@ -205,10 +205,19 @@ jugadorController.generarJornadasYPuntosPorEquipo = async (req,res) => {
                     equipo.points += points;
                     equipo.save();
                 }
-            })
+            })    
+        let content = 'Se ha cargado correctamente la jornada  '.concat(journeyDB.name).concat(' para todos los equipos de la comunidad ').concat(comunidad.name);
+        const newNotice = new Notice({
+        comunity: comunidad._id,
+        content: content, 
+        status: 'NotShowed',
+        users: [],
         })
-        console.log("Jornada cargada correctamente y puntuaciones asignadas a los equipos.");
-        res.status(200).send("Jornada cargada correctamente y puntuaciones asignadas a los equipos.");
+        
+        newNotice.save();
+    })
+    console.log("Jornada cargada correctamente y puntuaciones asignadas a los equipos.");
+    res.status(200).send("Jornada cargada correctamente y puntuaciones asignadas a los equipos.");
     }
 }
 
@@ -255,9 +264,20 @@ function filterPlayersNotDuplicated(journeyPlayers, alignedPlayers) {
 jugadorController.actualizaJugadorDelEquipoYComunidad = async(req,res) => {
     const {idTeam,idPlayer,status} = req.params; 
     const equipo = await Equipo.findById(idTeam);
+    const equipoCopy = {
+        _id: equipo._id,
+        name: equipo.name,
+        image: equipo.image
+    };
     var i = 0;
     while(i < equipo.players.length) {
         if(idPlayer === equipo.players[i]._id.toString()){
+            const offers = await Offer.find({player: equipo.players[i]}); 
+            offers.forEach((offer) => {
+                offer.status = 'Inactive'
+                offer.save()
+            })
+            equipo.players[i].team =  equipoCopy;
             equipo.players[i].status = status;
             equipo.players.splice(i, 1, equipo.players[i]);
             break;
@@ -269,6 +289,7 @@ jugadorController.actualizaJugadorDelEquipoYComunidad = async(req,res) => {
     var j = 0;
     while(j < comunidad.players.length) {
         if(idPlayer === comunidad.players[j]._id.toString()){
+            comunidad.players[j].team = equipoCopy;
             comunidad.players[j].status = status;
             comunidad.players.splice(j, 1, comunidad.players[j]);
             break;
@@ -277,7 +298,7 @@ jugadorController.actualizaJugadorDelEquipoYComunidad = async(req,res) => {
     }
     equipo.save();
     comunidad.save();
-    res.status(204).send(equipo);
+    res.status(200).send(equipo);
 }
 
 module.exports = jugadorController;

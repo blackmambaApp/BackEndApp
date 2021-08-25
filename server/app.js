@@ -6,6 +6,13 @@ const passport = require('passport');
 const flash = require('connect-flash');
 const mongoose = require('mongoose');
 
+
+var bodyParser = require('body-parser');
+app.use(bodyParser.json({limit: "50mb"}));
+app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
+
+
+
 //IMPORT VARIBLES DE ENTORNO
 require('dotenv').config({path : 'desarrollo.env'});
 console.log(process.env.DB_URL);
@@ -59,6 +66,9 @@ app.use('/api/user', require('./routes/userRoutes/user.routes'));
 app.use('/api/comunidades', require('./routes/accionesRoutes/comunidad.routes'));
 app.use('/api/jugadores',require('./routes/accionesRoutes/jugador.routes'));
 app.use('/api/equipo',require('./routes/teamRoutes/team.routes'));
+app.use('/api/offers',require('./routes/offersRoutes/offer.routes'));
+app.use('/api/notice',require('./routes/noticeRoutes/notice.routes'));
+app.use('/api/admin',require('./routes/adminRoutes/admin.routes'));
 
 app.get('/', (req,res) => {
     res.send('La aplicacion de Backend se ha arrancado correctamente');
@@ -67,7 +77,7 @@ app.get('/', (req,res) => {
 //Starting the Server
 
 
-app.listen(process.env.PORT || 8080, () => {
+app.listen(process.env.PORT || 3000, () => {
     console.log(`Server Working`);
 
 })

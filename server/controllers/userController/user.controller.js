@@ -1,13 +1,10 @@
 const User = require('../../models/userModel/users');
 const Comunidad = require('../../models/comunidadModel/comunidad');
 const Equipo = require('../../models/equipoModel/equipo');
-const Offer = require('../../models/offerModel/offer');
 const Notice = require('../../models/noticeModel/notice');
 const bcrypt = require('bcrypt-nodejs');
-const { ExtractJwt } = require('passport-jwt');
 const userController= {};
 const jwt = require('jsonwebtoken');
-const GenerateExcel = require('../../utiles/excel_puntos_jornada');
 
 userController.getUsers = async (req, res) => {
     const users = await User.find();

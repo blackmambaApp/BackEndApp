@@ -7,7 +7,7 @@ const comunidad_schema = new Schema({
     password: {type:String, required:false},
     numIntegrants: {type:Number, required:true},
     budget: {type: Number, required:true},
-    jugadoresMaximosMercado: {type: Number, required: true},
+    maxPlayersOnMarket: {type: Number, required: true},
     maxDaysPlayerOnMarket: {type: Number, required: true},
     playersForUserInMarket: {type: Number, required: true},
     type: {

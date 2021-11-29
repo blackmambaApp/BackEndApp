@@ -60,80 +60,87 @@ adminController.manageAdminOffers = async(req,res) => {
     const comunidades = await Comunidad.find({});
 
     comunidades.forEach(async(comunidad, index) => {
-        let offersFoComunity = await Offer.find({comunity : comunidad._id.toString()}).populate({path:'player'});
-        let offersToAdmin = offersFoComunity.filter(o => o.actualTeam.name === 'System Team');
+        let offersForComunity = await Offer.find({comunity : comunidad._id.toString()}).populate({path:'player'});
+        let offersToAdmin = offersForComunity.filter(o => o.actualTeam.name === 'System Team');
         let comunidadPlayersOnMarketByAdmin = comunidad.players.filter(player => player.status === 'Transferible' && player.team.name === 'System Team');
         comunidadPlayersOnMarketByAdmin.forEach(async(player) => {
             let offersForAdminToPlayer = offersToAdmin.filter(o => o.player.name === player.name);
             if(offersForAdminToPlayer.length !== 0 && offersForAdminToPlayer.length === 1){
                 let offerToAccept = offersForAdminToPlayer[0];
-                player.status = 'ConEquipo';
-                let offerTeam = await Equipo.findOne({name : offerToAccept.offerTeam.name});
-                let indexOfPComunity = comunidad.players.findIndex(p => p.name === player.name);
-                const offerTeamCopy = {
-                    _id: offerTeam._id,
-                    name: offerTeam.name,
-                    image: offerTeam.image
-                };
-                player.team = offerTeamCopy; 
-                comunidad.players.splice(indexOfPComunity, 1, player); 
-                offerTeam.players.push(player); 
-                offerToAccept.status = 'Accepted';
-            
-                offerToAccept.budget = offerTeam.budget - offerToAccept.offerAmount;
-                offerToAccept.numPlayers = offerTeam.players.length;
-                offerToAccept.save();
-                offerTeam.save();
+                if(player.transferValue - offerToAccept.offerAmount > 100){
+                    offer.status = 'Rejected';
+                    offer.save();
+                }else{
+                    player.status = 'ConEquipo';
+                    let offerTeam = await Equipo.findOne({name : offerToAccept.offerTeam.name});
+                    let indexOfPComunity = comunidad.players.findIndex(p => p.name === player.name);
+                    const offerTeamCopy = {
+                        _id: offerTeam._id,
+                        name: offerTeam.name,
+                        image: offerTeam.image
+                    };
+                    player.team = offerTeamCopy; 
+                    comunidad.players.splice(indexOfPComunity, 1, player); 
+                    offerTeam.players.push(player); 
+                    offerToAccept.status = 'Accepted';
+                
+                    offerToAccept.budget = offerTeam.budget - offerToAccept.offerAmount;
+                    offerToAccept.numPlayers = offerTeam.players.length;
+                    offerToAccept.save();
+                    offerTeam.save();
 
-                let content = 'El club '.concat(offerTeam.name).concat(' ha fichado al jugador ').concat(player.name).concat(' procedente del sistema por valor de ').concat(Utiles.formatoES(offerToAccept.offerAmount)).concat('€');
-                const newNotice = new Notice({
-                    comunity: comunidad._id,
-                    content: content, 
-                    offer: offerToAccept, 
-                    status: 'NotShowed',
-                    type: 'Transfer',
-                    users: [],
-                })
-                newNotice.save();
-                comunidad.save();
+                    let content = 'El club '.concat(offerTeam.name).concat(' ha fichado al jugador ').concat(player.name).concat(' procedente del sistema por valor de ').concat(Utiles.formatoES(offerToAccept.offerAmount)).concat('€');
+                    const newNotice = new Notice({
+                        comunity: comunidad._id,
+                        content: content, 
+                        offer: offerToAccept, 
+                        status: 'NotShowed',
+                        type: 'Transfer',
+                        users: [],
+                    })
+                    newNotice.save();
+                    comunidad.save();
+                }
             }else if(offersForAdminToPlayer.length !== 0 && offersForAdminToPlayer.length > 1){
                 let offersForAdminToPlayerOrdered = offersForAdminToPlayer.sort(Utiles.compareOffersByAmount)
                 offersForAdminToPlayerOrdered.forEach(async(offer, index) => {
                     if(index === 0){
-                        let offerTeam = await Equipo.findOne({name : offer.offerTeam.name});
-                        let indexOfPComunity = comunidad.players.findIndex(p => p.name === player.name);
-                        player.status = 'ConEquipo'
-                        const offerTeamCopy = {
-                            _id: offerTeam._id,
-                            name: offerTeam.name,
-                            image: offerTeam.image
-                        };
-                        player.team = offerTeamCopy; 
+                        if(player.transferValue - offer.offerAmount > 100){
+                            offer.status = 'Rejected';
+                            offer.save();
+                        }else{
+                            let offerTeam = await Equipo.findOne({name : offer.offerTeam.name});
+                            let indexOfPComunity = comunidad.players.findIndex(p => p.name === player.name);
+                            player.status = 'ConEquipo'
+                            const offerTeamCopy = {
+                                _id: offerTeam._id,
+                                name: offerTeam.name,
+                                image: offerTeam.image
+                            };
+                            player.team = offerTeamCopy; 
+
+                            comunidad.players.splice(indexOfPComunity, 1, player); 
+
+                            offerTeam.players.push(player); 
+                            offer.status = 'Accepted';
+                            offer.save();
                         
-                        comunidad.players.splice(indexOfPComunity, 1, player); 
+                            offerTeam.budget = offerTeam.budget - offer.offerAmount;
+                            offerTeam.numPlayers = offerTeam.players.length;
 
-                        offerTeam.players.push(player); 
-                        offer.status = 'Accepted';
-                        offer.save();
-                    
-                        offerTeam.budget = offerTeam.budget - offer.offerAmount;
-                        offerTeam.numPlayers = offerTeam.players.length;
-
-                        let content = 'El club '.concat(offerTeam.name).concat(' ha fichado al jugador ').concat(player.name).concat(' procedente del sistema por valor de ').concat(Utiles.formatoES(offer.offerAmount)).concat('€');
-
-                        const newNotice = new Notice({
-                            comunity: comunidad._id,
-                            content: content, 
-                            offer: offer, 
-                            status: 'NotShowed',
-                            type: 'Transfer',
-                            users: [],
-                        })
-                
-                        newNotice.save();
-                        
-                        offerTeam.save();
-                        comunidad.save();
+                            let content = 'El club '.concat(offerTeam.name).concat(' ha fichado al jugador ').concat(player.name).concat(' procedente del sistema por valor de ').concat(Utiles.formatoES(offer.offerAmount)).concat('€');
+                            const newNotice = new Notice({
+                                comunity: comunidad._id,
+                                content: content, 
+                                offer: offer, 
+                                status: 'NotShowed',
+                                type: 'Transfer',
+                                users: [],
+                            })
+                            newNotice.save();
+                            offerTeam.save();
+                            comunidad.save();
+                        }
                     }else {
                         offer.status = 'Rejected';
                         offer.save();
@@ -141,8 +148,6 @@ adminController.manageAdminOffers = async(req,res) => {
                 })
             }
         })
-
-
     })
 }
 

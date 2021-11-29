@@ -44,7 +44,7 @@ comunidadController.createComunidad = async(req, res) => {
         password: req.body.password, 
         numIntegrants: req.body.numIntegrants,
         budget: req.body.budget,
-        jugadoresMaximosMercado : req.body.jugadoresMaximosMercado,
+        maxPlayersOnMarket : req.body.maxPlayersOnMarket,
         maxDaysPlayerOnMarket: req.body.maxDaysPlayerOnMarket,
         playersForUserInMarket: req.body.playersForUserInMarket,
         type: type,    
@@ -89,7 +89,7 @@ comunidadController.addUserAndUpdateComunidad = async(req,res) => {
             numIntegrants: req.body.numIntegrants,
             budget: req.body.budget,
             type: req.body.type,
-            jugadoresMaximosMercado : req.body.jugadoresMaximosMercado,
+            maxPlayersOnMarket : req.body.maxPlayersOnMarket,
             maxDaysPlayerOnMarket: req.body.maxDaysPlayerOnMarket,
             playersForUserInMarket: req.body.playersForUserInMarket,
             users: usersActuales
@@ -114,7 +114,7 @@ comunidadController.updateComunidad = async(req,res) => {
         numIntegrants: req.body.numIntegrants,
         budget: req.body.budget,
         type: req.body.type,
-        jugadoresMaximosMercado : req.body.jugadoresMaximosMercado,
+        maxPlayersOnMarket : req.body.maxPlayersOnMarket,
         maxDaysPlayerOnMarket: req.body.maxDaysPlayerOnMarket,
         playersForUserInMarket: req.body.playersForUserInMarket,
         users: req.body.users

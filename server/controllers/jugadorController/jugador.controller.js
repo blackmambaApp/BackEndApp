@@ -1,6 +1,6 @@
 const Jugador = require('../../models/equipoModel/jugador');
 const User = require('../../models/userModel/users');
-const PuntosJugador = require('../../models/jornadaJugadorPuntos/jornadaEquipo');
+const Notice = require('../../models/noticeModel/notice');
 const Offer = require('../../models/offerModel/offer');
 const Jornada = require('../../models/jornadaJugadorPuntos/jornada');
 const Comunidad = require('../../models/comunidadModel/comunidad');
@@ -264,41 +264,52 @@ function filterPlayersNotDuplicated(journeyPlayers, alignedPlayers) {
 jugadorController.actualizaJugadorDelEquipoYComunidad = async(req,res) => {
     const {idTeam,idPlayer,status} = req.params; 
     const equipo = await Equipo.findById(idTeam);
-    const equipoCopy = {
-        _id: equipo._id,
-        name: equipo.name,
-        image: equipo.image
-    };
-    var i = 0;
-    while(i < equipo.players.length) {
-        if(idPlayer === equipo.players[i]._id.toString()){
-            const offers = await Offer.find({player: equipo.players[i]}); 
-            offers.forEach((offer) => {
-                offer.status = 'Inactive'
-                offer.save()
-            })
-            equipo.players[i].team =  equipoCopy;
-            equipo.players[i].status = status;
-            equipo.players.splice(i, 1, equipo.players[i]);
-            break;
+    const jugador = await Jugador.findById(idPlayer);
+    let jugadorEnAlineacion = false;
+    equipo.alignedPlayers.forEach((player) => {
+        if(player._id ===  jugador._id.toString()){
+            jugadorEnAlineacion = true;
         }
-        i += 1;  
-    }
-    const idComunidad = equipo.comunidad.toString();
-    const comunidad = await Comunidad.findById(idComunidad);
-    var j = 0;
-    while(j < comunidad.players.length) {
-        if(idPlayer === comunidad.players[j]._id.toString()){
-            comunidad.players[j].team = equipoCopy;
-            comunidad.players[j].status = status;
-            comunidad.players.splice(j, 1, comunidad.players[j]);
-            break;
+    })
+    if(jugadorEnAlineacion === false){
+        const equipoCopy = {
+            _id: equipo._id,
+            name: equipo.name,
+            image: equipo.image
+        };
+        var i = 0;
+        while(i < equipo.players.length) {
+            if(idPlayer === equipo.players[i]._id.toString()){
+                const offers = await Offer.find({player: equipo.players[i]}); 
+                offers.forEach((offer) => {
+                    offer.status = 'Inactive'
+                    offer.save()
+                })
+                equipo.players[i].team =  equipoCopy;
+                equipo.players[i].status = status;
+                equipo.players.splice(i, 1, equipo.players[i]);
+                break;
+            }
+            i += 1;  
         }
-        j += 1;
+        const idComunidad = equipo.comunidad.toString();
+        const comunidad = await Comunidad.findById(idComunidad);
+        var j = 0;
+        while(j < comunidad.players.length) {
+            if(idPlayer === comunidad.players[j]._id.toString()){
+                comunidad.players[j].team = equipoCopy;
+                comunidad.players[j].status = status;
+                comunidad.players.splice(j, 1, comunidad.players[j]);
+                break;
+            }
+            j += 1;
+        }
+        equipo.save();
+        comunidad.save();
+        res.status(200).send(equipo);
+    }else {
+        res.status(204).send('Jugador en alineacion no puede pasar al mercado.');
     }
-    equipo.save();
-    comunidad.save();
-    res.status(200).send(equipo);
 }
 
 module.exports = jugadorController;

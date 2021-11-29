@@ -186,7 +186,7 @@ teamController.updateTeam = async(req, res) => {
 teamController.deleteTeamAndExitComunity = async(req, res) => {
     const {idTeam, nickName} = req.params;
     const user = await User.findOne({nickName: nickName});
-    const comunidadEsOwner = await Comunidad.findOne({owner: user});
+    const comunidadEsOwner = await Comunidad.findOne({owner: user}).populate({path: "users"});
     const comunidadUser = await Comunidad.findOne({users: user});
     const equipo = await Equipo.findById(idTeam).populate({path:"comunidad"});
     const comunidad = equipo.comunidad;
@@ -198,35 +198,42 @@ teamController.deleteTeamAndExitComunity = async(req, res) => {
             var indice = comunidad.players.findIndex(p => p.name == player.name);
             comunidad.players.splice(indice, 1, playerComunity);
         })
-        let mensaje = "";
+        let mensaje = [];
         if(comunidadEsOwner != null) {
             if (comunidad._id.toString() === comunidadEsOwner._id.toString()) { 
                 const users = comunidadEsOwner.users;
-                if(users.length === 1){
+                //Menos el jugador que queremos eliminar
+                if((users.length - 1) === 0){
                     await Comunidad.deleteOne(comunidad);
                     user.comunidad = null;
                     user.save();
-                    mensaje.concat("Comunidad eliminada.");
+                    mensaje.push("Comunidad eliminada.");
                 }else{
+                    var indexOfUserToDeleteFromArray = users.findIndex(u => u.id == user.id); 
+                    users.splice(indexOfUserToDeleteFromArray, 1); 
                     comunidad.owner = users[0];
                     var indexTeam = comunidad.teams.findIndex(team => team._id.toString() === equipo._id.toString());
                     if (indexTeam > -1){
                         comunidad.teams.splice(indexTeam, 1);
+                        mensaje.push("Equipo eliminado de la comunidad."); 
                     }
                     var indexUser = comunidad.users.findIndex(u => u._id.toString() === user._id.toString());
                     if (indexUser > -1) { 
                         comunidad.users.splice(indexUser, 1);
+                        mensaje.push("Jugador eliminado de la comunidad.")
                     }
+                    user.comunidad = null; 
+                    user.save();
                     comunidad.save();
                 }
             }
         }else if(comunidadUser != null) {
             const users = comunidadUser.users;
-            if(users.length === 1){
+            if((users.length - 1) === 0){
                 await Comunidad.deleteOne(comunidad);
                 user.comunidad = null;
                 user.save();
-                mensaje.concat("Comunidad eliminada.");
+                mensaje.push("Comunidad eliminada.");
             }else{
                 var indexTeam = comunidad.teams.findIndex(team => team._id.toString() === equipo._id.toString());
                 if (indexTeam > -1){
@@ -236,10 +243,12 @@ teamController.deleteTeamAndExitComunity = async(req, res) => {
                 if (indexUser > -1) { 
                     comunidad.users.splice(indexUser, 1);
                 }
+                user.comunidad = null; 
+                user.save();
                 comunidad.save();
             }
         }
-        mensaje.concat("Equipo eliminado")
+        mensaje.push("Equipo eliminado")
         res.status(200).send(mensaje);
     }).catch((err) => {
         res.status(409).send("El equipo no se ha podido borrar");

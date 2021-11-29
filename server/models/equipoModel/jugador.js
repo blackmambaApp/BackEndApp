@@ -18,7 +18,8 @@ const jugador_schema = new Schema ({
     playerImg: {type:String},
     points: {type: Number, default: 0},
     team: {},
-    puntuations: [[Number]]
+    puntuations: [[Number]],
+    marketDate: {type: Date, default:Date.now}
 })
 
 module.exports = mongoose.model('Jugador', jugador_schema);

@@ -23,7 +23,7 @@ var session = require('express-session'),
 
 // DATABASE SETTINGS.
 mongoose.set('useFindAndModify', false);
-const uri = process.env.DB_URL;
+const uri = "mongodb+srv://admin:Q1R2s3u4@cluster0.vfjbi.mongodb.net/blackMambaDBPre?retryWrites=true&w=majority"
 mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true});
 const connection = mongoose.connection;
 
@@ -38,11 +38,11 @@ app.set('host',  process.env.HOST || '0.0.0.0'); //Elige un puerto automatico o 
 
 //Middlewares 
 app.use(morgan('dev')); //Con esto podemos ver las peticiones HTTP por la consola (GET, POST, PUT...);
-app.use(express.json()); //permitimos que el servidor pueda entender todos los datos que vengan en formato Json, ya que MongoDb y Angular va a trabajar con JSON 
+app.use(express.json()); //permitimos que el servidor pueda entender todos los datos que vengan en formato Json, ya que MongoDb y React JS van a trabajar con JSON 
 
 app.use(cors({origin:'http://localhost:3001'}));  //Sincronizamos el servidor del back en este caso 3000 de Node con el del front en este caso 4200 de Angular
 
-//Middlewares para Passport
+//Middleware para Passport que nos permite realizar la autenticación
 app.use(express.static("public"));
 app.use(session({
     secret: "amine",

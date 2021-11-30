@@ -4,5 +4,7 @@ const adminController = require('../../controllers/adminController/adminControll
 
 router.post('/manageAdminOffers', adminController.manageAdminOffers)
 router.get('/refreshMarkets', adminController.refreshAllComunityMarkets);
+router.get('/manageAllUsers', adminController.manageAllSistemUsers);
+router.get('/manageAllComunities', adminController.manageAllSistemComunities);
 
 module.exports = router;

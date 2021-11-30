@@ -150,6 +150,14 @@ adminController.manageAdminOffers = async(req,res) => {
         })
     })
 }
+adminController.manageAllSistemUsers = async(req,res) => {
+    const users = await User.find({}).populate({path:'comunidad'}).populate({path:'equipo'});
+    res.status(200).send(users)
+}
 
+adminController.manageAllSistemComunities = async(req,res) => {
+    const comunidades = await Comunidad.find({});
+    res.status(200).send(comunidades);
+}
 
 module.exports = adminController;

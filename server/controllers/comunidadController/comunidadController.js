@@ -94,6 +94,8 @@ comunidadController.addUserAndUpdateComunidad = async(req,res) => {
             playersForUserInMarket: req.body.playersForUserInMarket,
             users: usersActuales
         }
+        userBD.comunidad = newComunidad;
+        userBD.save()
         await Comunidad.findByIdAndUpdate(idComunidad, {$set: newComunidad}, (err,result) => {
             if(err) {
                 console.log(err)
